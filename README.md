@@ -61,8 +61,4 @@ The application is deployed on Streamlit Community Cloud, making it accessible t
 
 ### Live Application Screenshot
 ![Stock Analysis App](screenshot/Screenshot%202026-10-28%20213106.png)
-### Financial Fundamentals
-![Financial Fundamentals](screenshots/fundamentals.png)
-
----
 
