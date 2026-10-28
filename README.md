@@ -54,15 +54,13 @@ The application is deployed on Streamlit Community Cloud, making it accessible t
 6. **News analysis:** Stock-related articles are retrieved through StockNews.
 7. **Results:** The user explores the available information through the Streamlit dashboard.
 
+---
 
-## 🖥️ Application Screenshots
+## 📸 App Preview
+![Dashboard Preview](screenshot/dashboard_preview.png)
 
-### Dashboard Overview
-![Stock Analysis Dashboard](screenshots/dashboard.png)
-
-### Stock Price Analysis
-![Stock Price Analysis](screenshots/stock-analysis.png)
-
+### Live Application Screenshot
+![Stock Analysis App](screenshot/Screenshot%202026-10-28%20213106.png)
 ### Financial Fundamentals
 ![Financial Fundamentals](screenshots/fundamentals.png)
 
