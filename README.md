@@ -1,45 +1,70 @@
-# 📊 Stock Analysis App (Deployed Version)
+# 📈 Stock Analysis App | Real-Time Financial Dashboard
 
-This is the **publicly deployed version** of my real-time stock market dashboard, built using **Streamlit** and hosted on **Streamlit Cloud**.
+A web-based stock market analysis dashboard built with **Python and Streamlit** that helps users explore stock price trends, analyze historical performance, review financial statements, and access market news through a single interactive interface.
 
-🌐 **Live App:**  
-👉 [https://stockanalysisapp.streamlit.app](https://stockanalysisapp.streamlit.app)
-
----
-
-## 💡 What does this app do?
-
-This Streamlit dashboard allows users to:
-
-- ✅ View real-time stock prices (via Yahoo Finance)
-- ✅ Analyze historical open price trends
-- ✅ Get annual financial statements:
-  - Balance Sheet
-  - Income Statement
-  - Cash Flow Statement (via Alpha Vantage)
-- ✅ Read top 10 financial news articles (via StockNews API)
-- ✅ Calculate stock volatility and expected annual return
-
-It’s a great tool for anyone looking to quickly analyze a stock from both a price and fundamentals perspective.
+🌐 **Live Demo:** [Stock Analysis App](https://stockanalysisapp.streamlit.app/)  
 
 ---
 
-## 🛠 Built With:
+## 🎯 Problem Statement
 
-- **Python**
-- **Streamlit**
-- **Pandas, NumPy**
-- **Plotly**
-- **yfinance**, **alpha_vantage**, **stocknews**
+Analyzing a stock often requires switching between multiple platforms to access historical prices, financial statements, performance metrics, and market news. This fragmented workflow makes it difficult for users to get a quick, consolidated view of a company's market performance.
+
+The goal of this project is to bring these essential stock analysis capabilities together in one interactive dashboard, making financial data easier to explore and interpret.
+
+## 💡 Solution
+
+I developed a Streamlit-based stock analysis application that combines historical market data, financial statement retrieval, performance indicators, and financial news in a unified interface.
+
+Users can enter a stock ticker, select a date range, and explore price movements and financial information through interactive visualizations and organized data views.
+
+The application is deployed on Streamlit Community Cloud, making it accessible through a web browser without requiring users to install the application locally.
+
+## ✨ Key Features
+
+- **📊 Stock Price Analysis** — Retrieve historical stock market data using Yahoo Finance and examine open-price trends over a selected period.
+- **📈 Interactive Visualizations** — Explore stock price movements and market trends using Plotly charts.
+- **💰 Performance Metrics** — Review the latest available price, daily price change, period return, and annualized volatility.
+- **🏦 Financial Statements** — Retrieve annual balance sheets, income statements, and cash flow statements using the Alpha Vantage API.
+- **📰 Financial News** — Access the latest available stock-related news articles through the StockNews library.
+- **📅 Custom Date Range** — Select a historical period to analyze stock performance.
+- **🌐 Live Deployment** — Access the application online through Streamlit Community Cloud.
+
+## 🛠️ Tech Stack
+
+| Technology | Purpose |
+|---|---|
+| Python | Core application logic and data processing |
+| Streamlit | Interactive web application and user interface |
+| Pandas | Data manipulation and analysis |
+| NumPy | Numerical computations and financial metrics |
+| Plotly | Interactive financial data visualizations |
+| yfinance | Historical stock market data |
+| Alpha Vantage | Financial statement data |
+| StockNews | Stock-related news retrieval |
+| Streamlit Community Cloud | Application hosting and deployment |
+
+## 🏗️ How It Works
+
+1. **User input:** The user enters a stock ticker and selects the analysis period.
+2. **Market data retrieval:** The application fetches historical stock data through Yahoo Finance.
+3. **Data processing:** Python, Pandas, and NumPy are used to prepare the data and calculate performance metrics.
+4. **Visualization:** Plotly presents stock trends and other analytical views.
+5. **Fundamental analysis:** The application retrieves available financial statements through Alpha Vantage.
+6. **News analysis:** Stock-related articles are retrieved through StockNews.
+7. **Results:** The user explores the available information through the Streamlit dashboard.
+
+
+## 🖥️ Application Screenshots
+
+### Dashboard Overview
+![Stock Analysis Dashboard](screenshots/dashboard.png)
+
+### Stock Price Analysis
+![Stock Price Analysis](screenshots/stock-analysis.png)
+
+### Financial Fundamentals
+![Financial Fundamentals](screenshots/fundamentals.png)
 
 ---
 
-## 🔁 Want to explore the full DevOps version?
-
-This deployed version is just the frontend app.
-
-For the **complete CI/CD pipeline**, Docker containerization, Jenkins automation, and Cloudflare Tunnel integration —  
-📦 Check out my full project here:  
-👉 [Real-Time-Financial-Dashboard-with-CI-CD](https://github.com/anuragchakravarty/Real-Time-Financial-Dashboard-with-CI-CD)
-
----
