@@ -1,3 +1,4 @@
+
 import streamlit as st
 import pandas as pd
 import numpy as np
@@ -6,62 +7,101 @@ import plotly.graph_objects as go
 from alpha_vantage.fundamentaldata import FundamentalData
 from stocknews import StockNews
 
+
 # --------------------------------------------------
 # Page setup
 # --------------------------------------------------
 st.set_page_config(
-    page_title="📈 Financial Stock Dashboard Analysis ",
-    page_icon="📈",
+    page_title="📈 Financial Stock Dashboard Analysis",
     layout="wide"
 )
 
 st.title("📈 Financial Stock Dashboard Analysis")
-st.caption(
-    "Explore stock performance, volatility, trading activity, "
-    "financial statements, and market news."
+
+st.markdown(
+    """
+    Explore stock performance, volatility, trading activity,
+    financial statements, and market news.
+
+    **Analyze thousands of publicly traded companies and other
+    supported tickers available through Yahoo Finance.** Enter a
+    ticker such as `AAPL` for Apple, `GOOGL` for Alphabet,
+    `MSFT` for Microsoft, or `NVDA` for NVIDIA to explore its data.
+
+    *Not sure which ticker to use? Start by entering a company symbol
+    in the sidebar.*
+    """
 )
+
 
 # --------------------------------------------------
 # Sidebar filters
 # --------------------------------------------------
 st.sidebar.header("Dashboard Filters")
 
-with st.sidebar.form("stock_search_form"):
-    ticker_input = st.text_input(
-        "Stock ticker",
-        value="MSFT",
-        help="Examples: MSFT, AAPL, GOOGL, NVDA, AMZN"
-    ).strip().upper()
+ticker_input = st.sidebar.text_input(
+    "Search a company by ticker",
+    value="",
+    placeholder="Enter ticker symbol...",
+    help="Examples: MSFT, AAPL, GOOGL, NVDA, AMZN",
+    key="ticker_input"
+).strip().upper()
 
-    today = pd.Timestamp.today().date()
+today = pd.Timestamp.today().date()
 
-    start_date = st.date_input(
-        "Start date",
-        value=today - pd.Timedelta(days=365)
-    )
+start_date = st.sidebar.date_input(
+    "Start date",
+    value=today - pd.Timedelta(days=365),
+    key="start_date"
+)
 
-    end_date = st.date_input(
-        "End date",
-        value=today
-    )
+end_date = st.sidebar.date_input(
+    "End date",
+    value=today,
+    key="end_date"
+)
 
-    submitted = st.form_submit_button(
-        "Analyze Stock",
-        use_container_width=True
-    )
+submitted = st.sidebar.button(
+    "Analyze Stock",
+    use_container_width=True,
+    type="primary"
+)
 
+
+# --------------------------------------------------
+# Ticker submission and landing page
+# --------------------------------------------------
 if "active_ticker" not in st.session_state:
-    st.session_state.active_ticker = "MSFT"
+    st.session_state.active_ticker = ""
 
 if submitted:
     if not ticker_input:
-        st.sidebar.error("Enter a stock ticker.")
+        st.sidebar.warning("Please enter a stock ticker.")
     elif start_date >= end_date:
-        st.sidebar.error("Start date must be before end date.")
+        st.sidebar.warning(
+            "Start date must be earlier than end date."
+        )
     else:
         st.session_state.active_ticker = ticker_input
 
 ticker = st.session_state.active_ticker
+
+# Do not download data before a ticker is submitted.
+if not ticker:
+    st.info(
+        "👈 Enter a stock ticker in the sidebar and click "
+        "**Analyze Stock** to explore that company's dashboard."
+    )
+    st.stop()
+
+# Validate the date range.
+if start_date >= end_date:
+    st.warning(
+        "Choose a valid date range. The start date must be "
+        "earlier than the end date."
+    )
+    st.stop()
+
 
 # --------------------------------------------------
 # Data loading
@@ -82,10 +122,6 @@ def get_stock_data(symbol, start, end):
     return result.loc[:, ~result.columns.duplicated()]
 
 
-if start_date > end_date:
-    st.error("Choose a valid date range in the sidebar.")
-    st.stop()
-
 try:
     with st.spinner(f"Loading market data for {ticker}..."):
         data = get_stock_data(ticker, start_date, end_date)
@@ -98,21 +134,34 @@ try:
         st.stop()
 
 except Exception as exc:
-    st.error("Unable to retrieve stock prices. Please try again.")
-    print(f"Price data error for {ticker}: {type(exc).__name__}: {exc}")
+    st.error(
+        "Unable to retrieve stock prices. "
+        "Please check the ticker and try again."
+    )
+    print(
+        f"Price data error for {ticker}: "
+        f"{type(exc).__name__}: {exc}"
+    )
     st.stop()
+
 
 # --------------------------------------------------
 # Prepare price data and metrics
 # --------------------------------------------------
-price_col = "Adj Close" if "Adj Close" in data.columns else "Close"
+price_col = (
+    "Adj Close" if "Adj Close" in data.columns else "Close"
+)
 
 if price_col not in data.columns:
-    st.error("The data provider did not return a closing-price column.")
+    st.error(
+        "The data provider did not return a closing-price column."
+    )
     st.stop()
 
-prices = pd.to_numeric(data[price_col], errors="coerce")
-prices = prices.dropna()
+prices = pd.to_numeric(
+    data[price_col],
+    errors="coerce"
+).dropna()
 
 if prices.empty:
     st.error("No valid closing prices are available.")
@@ -122,7 +171,9 @@ daily_returns = prices.pct_change().dropna()
 latest_price = float(prices.iloc[-1])
 
 previous_close = (
-    float(prices.iloc[-2]) if len(prices) >= 2 else np.nan
+    float(prices.iloc[-2])
+    if len(prices) >= 2
+    else np.nan
 )
 
 daily_change = (
@@ -149,20 +200,25 @@ annualized_volatility = (
     else np.nan
 )
 
-# Use the downloaded data for chart calculations.
 chart_data = data.copy()
+
 chart_data["Closing Price"] = pd.to_numeric(
-    chart_data[price_col], errors="coerce"
+    chart_data[price_col],
+    errors="coerce"
 )
+
 chart_data["Daily Return (%)"] = (
     chart_data["Closing Price"].pct_change() * 100
 )
+
 chart_data["20-Day Moving Average"] = (
     chart_data["Closing Price"].rolling(20).mean()
 )
+
 chart_data["50-Day Moving Average"] = (
     chart_data["Closing Price"].rolling(50).mean()
 )
+
 
 # --------------------------------------------------
 # KPI cards
@@ -182,9 +238,11 @@ k2.metric(
     f"{daily_change_pct:+.2f}%"
     if pd.notna(daily_change_pct)
     else "N/A",
-    delta=f"${daily_change:+.2f}"
-    if pd.notna(daily_change)
-    else None
+    delta=(
+        f"${daily_change:+.2f}"
+        if pd.notna(daily_change)
+        else None
+    )
 )
 
 k3.metric(
@@ -202,12 +260,14 @@ k4.metric(
 )
 
 st.caption(
-    "Period return compares the first and last available closing prices. "
-    "Annualized volatility is calculated from daily returns; it is not a forecast."
+    "Period return compares the first and last available closing "
+    "prices. Annualized volatility is calculated from daily returns; "
+    "it is not a forecast."
 )
 
+
 # --------------------------------------------------
-# Chart controls
+# Price performance chart
 # --------------------------------------------------
 st.subheader("📊 Price Performance")
 
@@ -274,7 +334,9 @@ elif chart_type == "Candlestick":
             )
         )
     else:
-        st.warning("Candlestick data is unavailable for this ticker.")
+        st.warning(
+            "Candlestick data is unavailable for this ticker."
+        )
 
 fig.update_layout(
     template="plotly_dark",
@@ -288,8 +350,9 @@ fig.update_layout(
 
 st.plotly_chart(fig, use_container_width=True)
 
+
 # --------------------------------------------------
-# Volume and daily returns
+# Trading volume and daily returns
 # --------------------------------------------------
 left, right = st.columns(2)
 
@@ -313,14 +376,19 @@ with left:
             margin=dict(l=15, r=15, t=20, b=15)
         )
 
-        st.plotly_chart(volume_fig, use_container_width=True)
+        st.plotly_chart(
+            volume_fig,
+            use_container_width=True
+        )
     else:
         st.info("Volume data is unavailable.")
 
 with right:
     st.subheader("Daily Returns")
 
-    returns_data = chart_data.dropna(subset=["Daily Return (%)"])
+    returns_data = chart_data.dropna(
+        subset=["Daily Return (%)"]
+    )
 
     if not returns_data.empty:
         returns_fig = go.Figure(
@@ -331,7 +399,10 @@ with right:
             )
         )
 
-        returns_fig.add_hline(y=0, line_dash="dash")
+        returns_fig.add_hline(
+            y=0,
+            line_dash="dash"
+        )
 
         returns_fig.update_layout(
             template="plotly_dark",
@@ -341,17 +412,31 @@ with right:
             margin=dict(l=15, r=15, t=20, b=15)
         )
 
-        st.plotly_chart(returns_fig, use_container_width=True)
+        st.plotly_chart(
+            returns_fig,
+            use_container_width=True
+        )
     else:
-        st.info("Not enough observations to calculate daily returns.")
+        st.info(
+            "Not enough observations to calculate daily returns."
+        )
+
 
 # --------------------------------------------------
 # Tabs
 # --------------------------------------------------
 pricing_tab, fundamental_tab, news_tab = st.tabs(
-    ["💹 Pricing Data", "📊 Fundamental Data", "📰 Market News"]
+    [
+        "💹 Pricing Data",
+        "📊 Fundamental Data",
+        "📰 Market News"
+    ]
 )
 
+
+# --------------------------------------------------
+# Historical pricing data
+# --------------------------------------------------
 with pricing_tab:
     st.subheader(f"{ticker} Historical Data")
 
@@ -369,12 +454,17 @@ with pricing_tab:
         mime="text/csv"
     )
 
+
 # --------------------------------------------------
 # Fundamental data
 # --------------------------------------------------
 @st.cache_data(ttl=3600, show_spinner=False)
 def get_fundamental_data(symbol, method, api_key):
-    fd = FundamentalData(key=api_key, output_format="pandas")
+    fd = FundamentalData(
+        key=api_key,
+        output_format="pandas"
+    )
+
     response = getattr(fd, method)(symbol)
 
     if not response or response[0] is None:
@@ -389,8 +479,10 @@ def get_fundamental_data(symbol, method, api_key):
 
     if "fiscalDateEnding" in statement.columns:
         statement["fiscalDateEnding"] = pd.to_datetime(
-            statement["fiscalDateEnding"], errors="coerce"
+            statement["fiscalDateEnding"],
+            errors="coerce"
         ).dt.strftime("%Y-%m-%d")
+
         statement = statement.set_index("fiscalDateEnding")
 
     return statement
@@ -400,21 +492,38 @@ with fundamental_tab:
     try:
         api_key = st.secrets["ALPHA_VANTAGE_API_KEY"]
 
-        for method, title in [
-            ("get_balance_sheet_annual", "Balance Sheet"),
-            ("get_income_statement_annual", "Income Statement"),
-            ("get_cash_flow_annual", "Cash Flow Statement")
-        ]:
+        statements = [
+            (
+                "get_balance_sheet_annual",
+                "Balance Sheet"
+            ),
+            (
+                "get_income_statement_annual",
+                "Income Statement"
+            ),
+            (
+                "get_cash_flow_annual",
+                "Cash Flow Statement"
+            )
+        ]
+
+        for method, title in statements:
             st.subheader(title)
 
             try:
-                with st.spinner(f"Loading {title.lower()}..."):
+                with st.spinner(
+                    f"Loading {title.lower()}..."
+                ):
                     statement = get_fundamental_data(
-                        ticker, method, api_key
+                        ticker,
+                        method,
+                        api_key
                     )
 
                 if statement.empty:
-                    st.info(f"{title} is unavailable for {ticker}.")
+                    st.info(
+                        f"{title} is unavailable for {ticker}."
+                    )
                 else:
                     st.dataframe(
                         statement,
@@ -426,6 +535,7 @@ with fundamental_tab:
                     f"{title} error for {ticker}: "
                     f"{type(exc).__name__}: {exc}"
                 )
+
                 st.warning(
                     f"{title} could not be loaded. "
                     "Check API access and rate limits."
@@ -434,43 +544,74 @@ with fundamental_tab:
     except KeyError:
         st.info(
             "Configure ALPHA_VANTAGE_API_KEY in "
-            "your local Streamlit secrets."
+            "your Streamlit secrets."
         )
 
+    except Exception as exc:
+        print(
+            f"Fundamental data error for {ticker}: "
+            f"{type(exc).__name__}: {exc}"
+        )
+
+        st.warning(
+            "Fundamental data is temporarily unavailable."
+        )
+
+
 # --------------------------------------------------
-# News
+# Market news
 # --------------------------------------------------
 with news_tab:
     st.subheader(f"📰 Latest News — {ticker}")
 
     try:
         with st.spinner("Fetching stock news..."):
-            news_client = StockNews(ticker, save_news=False)
+            news_client = StockNews(
+                ticker,
+                save_news=False
+            )
+
             news_df = news_client.read_rss()
 
         if news_df is None or news_df.empty:
             st.info(f"No news articles found for {ticker}.")
         else:
             for _, article in news_df.head(10).iterrows():
-                title = article.get("title", "Untitled article")
+                article_title = article.get(
+                    "title",
+                    "Untitled article"
+                )
 
-                with st.expander(str(title)):
+                with st.expander(str(article_title)):
                     st.caption(
-                        f"Published: {article.get('published', 'Unknown')}"
-                    )
-                    st.write(
-                        article.get("summary", "No summary available.")
+                        "Published: "
+                        f"{article.get('published', 'Unknown')}"
                     )
 
-                    title_sentiment = article.get("sentiment_title")
-                    summary_sentiment = article.get("sentiment_summary")
+                    st.write(
+                        article.get(
+                            "summary",
+                            "No summary available."
+                        )
+                    )
+
+                    title_sentiment = article.get(
+                        "sentiment_title"
+                    )
+
+                    summary_sentiment = article.get(
+                        "sentiment_summary"
+                    )
 
                     if pd.notna(title_sentiment):
-                        st.write(f"Title sentiment: {title_sentiment}")
+                        st.write(
+                            f"Title sentiment: {title_sentiment}"
+                        )
 
                     if pd.notna(summary_sentiment):
                         st.write(
-                            f"Summary sentiment: {summary_sentiment}"
+                            "Summary sentiment: "
+                            f"{summary_sentiment}"
                         )
 
     except Exception as exc:
@@ -478,4 +619,5 @@ with news_tab:
             f"News error for {ticker}: "
             f"{type(exc).__name__}: {exc}"
         )
+
         st.warning("News is temporarily unavailable.")
